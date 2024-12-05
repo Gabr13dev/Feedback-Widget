@@ -27,3 +27,37 @@ export function upload(base64: string, filename: string) {
     return s3client.upload(params).promise();
 }
 
+export async function download(filename: string) {
+    const params = {
+        Bucket: bucket_name,
+        Key: "screenshoots/" + filename,
+    };
+
+    try {
+        const data = await s3client.getObject(params).promise();
+
+        const extension = filename.split('.').pop().toLowerCase();
+        let mimeType;
+        switch (extension) {
+            case 'jpg':
+            case 'jpeg':
+                mimeType = 'image/jpeg';
+                break;
+            case 'png':
+                mimeType = 'image/png';
+                break;
+            case 'pdf':
+                mimeType = 'application/pdf';
+                break;
+            default:
+                mimeType = 'application/octet-stream';
+                break;
+        }
+
+        const base64data = data.Body.toString('base64');
+        return `data:${mimeType};base64,${base64data}`;
+    } catch (error) {
+        console.error(`Erro ao baixar o arquivo ${filename}:`, error);
+        throw error;
+    }
+}
